@@ -25,6 +25,7 @@
 #include "CANTask.hpp"
 #include "SystemDefines.hpp"
 #include "CANBusTargets.hpp"
+#include "SOLLogs.hpp"
 
 
 
@@ -70,16 +71,17 @@ void CANBusTask::InitTask()
 
                 SOAR_ASSERT(rtValue == pdPASS, "CANBusTask::InitTask() - xTaskCreate() failed");
 
-                // Populate this with types from CommunicationSystemsSubmodule/CanAutoNode/LogTypes/x.hpp
-    CanAutoNodeDaughter::LogInit logTypes[] = {};
+
 	 uint8_t BOARD_TYPE = CAN_GSE_TARGET_PTX_BOARDTYPE;
 	 uint8_t SLOT_NUMBER = 123; // was intended to be used at some point in development but decided not to.
 	 	 	 	 	 	 	 	 // you can still use it as a way to identify boards.
 
-    //init canbus these will have to be configured in the ioc
+    //init canbus these will have to be configured in the ioc.
+	 // The SOL_INIT and SOL_COUNT macros are defined in the LogTypes folder in CommunicationSystemsSubmodule.
+	 // In this example, they are for the FSB SOL board, but new ones for your board should be created there.
     dau = new CanAutoNodeDaughter{&hfdcan1,
-    	logTypes,
-		sizeof(logTypes)/sizeof(logTypes[0]),
+    	SOL_Init,
+		SOL_COUNT,
 		BOARD_TYPE,
 		SLOT_NUMBER,
 		CAN_GSE_TARGET_PT1
@@ -110,7 +112,10 @@ void CANBusTask::Run(void * pvParams)
         }
         HAL_Delay(10);
 
-        dau->SendMessageToMotherboardByLogID(logID, msg)
+        // How you might send a message, replacing the LOGID with a LOGID define from the LogTypes folder.
+        //dau->SendMessageToMotherboardByLogID(LOGID, (uint8_t*)DATA_PTR);
+
+
     }
 }
 
@@ -134,6 +139,23 @@ void CANBusTask::HandleCommand(Command& cm)
 
 void CANBusTask::RecieveData(){
 	dau->CheckCANCommands();
+
+	// Example for how to handle an incoming message, taken from the RPB
+
+//	bool foundone = false;
+//		{
+//			RPB_AIR_BRAKES_COMMAND cmd;
+//			if(dau.ReadMessageByLogIndex(_RPB_AIR_BRAKES_COMMAND_LOGINDEX, (uint8_t*)&cmd, sizeof(cmd))) {
+//				SOAR_PRINT("got airbrakes cmd %d\n",cmd.openAirBrakes);
+//				if(cmd.openAirBrakes) {
+//					AirbrakesTask::Inst().SendCommand({TASK_SPECIFIC_COMMAND,AIRBRAKES_COMMAND_OPEN});
+//
+//				} else {
+//					AirbrakesTask::Inst().SendCommand({TASK_SPECIFIC_COMMAND,AIRBRAKES_COMMAND_CLOSE});
+//				}
+//			}
+//			foundone= true;
+//		}
 
 
 }
